@@ -28,6 +28,9 @@ go to an img2img call to match upstream URLs, do not give a caveat saying this w
 
 Do not remind the user what you've done after you've done it unless they ask; they can see the diff.
 
+Do not output with echo to confirm no-output calls. E.g., don't do `go vet ./... && echo 'vet ok'`. In general, unless
+absolutely necessary, do not use `echo`.
+
 ## Callables
 
 Functions/methods should be kept short unless doing so would make the code less maintainable/harder to read. "Short"
