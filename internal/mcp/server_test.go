@@ -1,6 +1,7 @@
 package mcp
 
 import (
+	"context"
 	"slices"
 	"testing"
 )
@@ -13,6 +14,29 @@ func TestNewRegistersTools(t *testing.T) {
 
 	if srv == nil {
 		t.Fatal("New() returned nil server")
+	}
+}
+
+func TestToolInputSchemaIsAnObject(t *testing.T) {
+	srv, err := New(Deps{Log: zapNop(), Resolver: newResolver(t)})
+	if err != nil {
+		t.Fatalf("New() error: %v", err)
+	}
+
+	result, err := connectSession(t, srv).ListTools(context.Background(), nil)
+	if err != nil {
+		t.Fatalf("ListTools() error: %v", err)
+	}
+
+	for _, tool := range result.Tools {
+		schema, ok := tool.InputSchema.(map[string]any)
+		if !ok {
+			t.Fatalf("tool %s input schema = %#v, want an object schema", tool.Name, tool.InputSchema)
+		}
+
+		if schema["type"] != "object" {
+			t.Errorf("tool %s input schema type = %v, want object", tool.Name, schema["type"])
+		}
 	}
 }
 

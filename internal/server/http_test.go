@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
@@ -57,14 +59,29 @@ func newAPI(t *testing.T, srv *Server) *httptest.Server {
 	return api
 }
 
+func newImageServer(t *testing.T) *httptest.Server {
+	t.Helper()
+
+	images := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write(testPNG(t))
+	}))
+
+	t.Cleanup(images.Close)
+
+	return images
+}
+
 func newMCPSession(t *testing.T, api *httptest.Server) *mcp.ClientSession {
 	t.Helper()
 
 	session, err := mcp.NewClient(&mcp.Implementation{Name: "test", Version: "v0"}, nil).Connect(
 		context.Background(),
 		&mcp.StreamableClientTransport{
-			Endpoint:             api.URL + "/mcp",
-			HTTPClient:           &http.Client{Transport: bearerRoundTripper{token: testAPIKey, base: http.DefaultTransport}},
+			Endpoint: api.URL + "/mcp",
+			HTTPClient: &http.Client{Transport: bearerRoundTripper{
+				token: testAPIKey,
+				base:  http.DefaultTransport,
+			}},
 			DisableStandaloneSSE: true,
 		},
 		nil,
@@ -76,6 +93,24 @@ func newMCPSession(t *testing.T, api *httptest.Server) *mcp.ClientSession {
 	t.Cleanup(func() { _ = session.Close() })
 
 	return session
+}
+
+func callInline(t *testing.T, session *mcp.ClientSession, imageURL string) *mcp.CallToolResult {
+	t.Helper()
+
+	result, err := session.CallTool(context.Background(), &mcp.CallToolParams{
+		Name:      "inline",
+		Arguments: map[string]any{"image_url": imageURL},
+	})
+	if err != nil {
+		t.Fatalf("CallTool(inline) error: %v", err)
+	}
+
+	if result.IsError {
+		t.Fatalf("CallTool(inline) tool error: %+v", result.Content)
+	}
+
+	return result
 }
 
 func TestMCPListsOnlyInline(t *testing.T) {
@@ -92,31 +127,17 @@ func TestMCPListsOnlyInline(t *testing.T) {
 		names = append(names, tool.Name)
 	}
 
-	if !slices.Equal(names, []string{"inline"}) {
-		t.Errorf("tools = %v, want [inline]", names)
+	if want := []string{"inline"}; !slices.Equal(names, want) {
+		t.Errorf("tools = %v, want %v", names, want)
 	}
 }
 
 func TestMCPInlineOverHTTP(t *testing.T) {
-	images := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_, _ = w.Write(testPNG(t))
-	}))
-	t.Cleanup(images.Close)
-
+	images := newImageServer(t)
 	api := newAPI(t, newTestServer(t, zap.NewNop()))
 	session := newMCPSession(t, api)
 
-	result, err := session.CallTool(context.Background(), &mcp.CallToolParams{
-		Name:      "inline",
-		Arguments: map[string]any{"image_url": images.URL + "/cat.png"},
-	})
-	if err != nil {
-		t.Fatalf("CallTool() error: %v", err)
-	}
-
-	if result.IsError {
-		t.Fatalf("CallTool() tool error: %+v", result.Content)
-	}
+	result := callInline(t, session, images.URL+"/cat.png")
 
 	if len(result.Content) != 2 {
 		t.Fatalf("content = %d, want a caption and one image", len(result.Content))
@@ -160,20 +181,42 @@ func TestMCPInlineReadsOwnPublicHostFromStore(t *testing.T) {
 	api := newAPI(t, srv)
 	session := newMCPSession(t, api)
 
-	result, err := session.CallTool(context.Background(), &mcp.CallToolParams{
-		Name:      "inline",
-		Arguments: map[string]any{"image_url": stored},
-	})
-	if err != nil {
-		t.Fatalf("CallTool() error: %v", err)
-	}
-
-	if result.IsError {
-		t.Fatalf("CallTool() tool error: %+v, want the URL read from the store without a network round trip", result.Content)
-	}
+	result := callInline(t, session, stored)
 
 	if len(result.Content) != 2 {
 		t.Fatalf("content = %d, want a caption and one image", len(result.Content))
+	}
+}
+
+func TestMCPInlineReadsMappedDirectory(t *testing.T) {
+	dir := t.TempDir()
+
+	if err := os.WriteFile(filepath.Join(dir, "pasted.png"), testPNG(t), 0o640); err != nil {
+		t.Fatalf("WriteFile() error: %v", err)
+	}
+
+	cfg := testConfig(t)
+	cfg.InlineURLMap = "https://chat.example.com/images/=" + dir
+
+	srv, err := New(cfg, zap.NewNop())
+	if err != nil {
+		t.Fatalf("New() error: %v", err)
+	}
+
+	t.Cleanup(func() { _ = srv.Shutdown(context.Background()) })
+
+	api := newAPI(t, srv)
+	session := newMCPSession(t, api)
+
+	result := callInline(t, session, "https://chat.example.com/images/pasted.png")
+
+	img, ok := result.Content[1].(*mcp.ImageContent)
+	if !ok {
+		t.Fatalf("content[1] = %#v, want an image block", result.Content[1])
+	}
+
+	if img.MIMEType != "image/webp" {
+		t.Errorf("mime type = %q, want image/webp", img.MIMEType)
 	}
 }
 

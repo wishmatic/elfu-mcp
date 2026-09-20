@@ -16,6 +16,7 @@ import (
 	"github.com/wishmatic/elfu-mcp/internal/filestore"
 	mcpServer "github.com/wishmatic/elfu-mcp/internal/mcp"
 	"github.com/wishmatic/elfu-mcp/internal/resolve"
+	"github.com/wishmatic/elfu-mcp/internal/sourcemap"
 	"go.uber.org/zap"
 )
 
@@ -74,7 +75,12 @@ func New(cfg config.Config, log *zap.Logger) (*Server, error) {
 	log.Info("local files enabled", zap.String("dir", cfg.FilesDir))
 	log.Warn("stored files are readable by anyone with the URL")
 
-	resolver, err := resolve.New(files, publicBase.String())
+	sources, err := sourcemap.Parse(cfg.InlineURLMap)
+	if err != nil {
+		return nil, fmt.Errorf("INLINE_URL_MAP: %w", err)
+	}
+
+	resolver, err := resolve.New(files, publicBase.String(), sources)
 	if err != nil {
 		return nil, fmt.Errorf("build image resolver: %w", err)
 	}

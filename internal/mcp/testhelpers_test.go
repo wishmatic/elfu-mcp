@@ -20,7 +20,7 @@ func zapNop() *zap.Logger {
 func newResolver(t *testing.T) *resolve.Resolver {
 	t.Helper()
 
-	resolver, err := resolve.New(nil, "")
+	resolver, err := resolve.New(nil, "", nil)
 	if err != nil {
 		t.Fatalf("resolve.New() error: %v", err)
 	}

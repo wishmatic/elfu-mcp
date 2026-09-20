@@ -104,6 +104,20 @@ func TestNewRequiresFilesDir(t *testing.T) {
 	}
 }
 
+func TestNewRejectsInvalidInlineURLMap(t *testing.T) {
+	cfg := testConfig(t)
+	cfg.InlineURLMap = "https://chat.example.com=not-a-directory-or-url"
+
+	_, err := New(cfg, zap.NewNop())
+	if err == nil {
+		t.Fatal("New() error = nil, want an error")
+	}
+
+	if !strings.Contains(err.Error(), "INLINE_URL_MAP") {
+		t.Errorf("error = %q, want it to name INLINE_URL_MAP", err.Error())
+	}
+}
+
 func TestNewLogsLocalFilesWarning(t *testing.T) {
 	core, logs := observer.New(zapcore.DebugLevel)
 

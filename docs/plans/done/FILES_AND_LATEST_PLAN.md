@@ -1,6 +1,6 @@
 # Conversation files: `files` and `latest`
 
-Status: Proposed
+Status: Done
 Depends on: none
 Related: `docs/plans/done/BOOTSTRAP_PLAN.md`, `../neo-mcp`
 
@@ -43,7 +43,7 @@ The prepared image, not the download:
 
 ```go
 type Entry struct {
-	URL       string // exactly as passed to inline
+	URL       string // as passed to inline, trimmed of surrounding whitespace
 	MediaType string // always image/webp today
 	Data      []byte // the encoded bytes inline already produced
 }
@@ -199,18 +199,18 @@ Content and structured output mirror `inline`'s shape, one text line per file im
 - `files`: content is `[text(url), image, ...]` oldest first; output is `count` plus a `files` array of
   `{url, media_type, bytes}`.
 - `latest`: content is the caption plus one image; output is `{url, media_type, bytes}`.
-- An empty conversation is not an error: both return `count` 0 and a single text note saying the conversation has no
-  files yet.
+- An empty conversation is not an error: `files` returns `count` 0 with no files, `latest` returns a zero output, and
+  both return a single text note saying the conversation has no files yet.
 - Image blocks carry the same `[user, assistant]` audience as `inline`, which is what lets the model see them.
 
 `inlineOutput` is left alone rather than shared, so the wholesale tool keeps its own types; the new tools use an
 identical `fileOutput`.
 
-Scope resolution lives in `internal/mcp/scope.go` as one function from a request to a `conversation.Key`, so all three
+Scope resolution lives in `internal/mcp/scope.go` as one method from a request to a `conversation.Key`, so all three
 tools resolve scope the same way:
 
 ```go
-func scopeKey(req *mcp.CallToolRequest) conversation.Key
+func (h *handlers) scopeKey(req *mcp.CallToolRequest) conversation.Key
 ```
 
 ### Presentation
@@ -286,21 +286,21 @@ Deliverables: `internal/conversation/registry.go`, `internal/conversation/regist
 
 Acceptance criteria:
 
-- [ ] `internal/conversation` imports only the standard library, verified with `go list -deps`.
-- [ ] Recording A, B, C under one key gives `Files` = A, B, C and `Latest` = C.
-- [ ] Re-recording A after A, B gives `Files` = B, A and `Latest` = A: refreshed bytes, original URL, no duplicate.
-- [ ] Trimming makes `" url "` and `"url"` the same entry.
-- [ ] Recording 51 entries keeps 50 and drops the oldest.
-- [ ] Entries recorded under one key never appear under another, for keys that differ in either the user ID or the
+- [x] `internal/conversation` imports only the standard library, verified with `go list -deps`.
+- [x] Recording A, B, C under one key gives `Files` = A, B, C and `Latest` = C.
+- [x] Re-recording A after A, B gives `Files` = B, A and `Latest` = A: refreshed bytes, original URL, no duplicate.
+- [x] Trimming makes `" url "` and `"url"` the same entry.
+- [x] Recording 51 entries keeps 50 and drops the oldest.
+- [x] Entries recorded under one key never appear under another, for keys that differ in either the user ID or the
       conversation ID.
-- [ ] The registry retains no raw id: no stored key contains the conversation ID or the user ID as a substring.
-- [ ] Keys cannot collide by concatenation, so `{UserID: "ab", ConversationID: "c"}` and
+- [x] The registry retains no raw id: no stored key contains the conversation ID or the user ID as a substring.
+- [x] Keys cannot collide by concatenation, so `{UserID: "ab", ConversationID: "c"}` and
       `{UserID: "a", ConversationID: "bc"}` are separate conversations.
-- [ ] A `Record` that would exceed the total byte budget evicts the least recently used conversation, and the evicted
+- [x] A `Record` that would exceed the total byte budget evicts the least recently used conversation, and the evicted
       conversation's `Files` is then empty. The conversation being written survives.
-- [ ] `Files` and `Latest` on an unknown key return an empty slice and `false`.
-- [ ] Mutating the slice returned by `Files` does not affect the registry.
-- [ ] Concurrent `Record`, `Files`, and `Latest` over many keys pass under `-race` with exact final counts.
+- [x] `Files` and `Latest` on an unknown key return an empty slice and `false`.
+- [x] Mutating the slice returned by `Files` does not affect the registry.
+- [x] Concurrent `Record`, `Files`, and `Latest` over many keys pass under `-race` with exact final counts.
 
 ### Unit 2: scope resolution and recording from `inline`
 
@@ -309,22 +309,22 @@ Deliverables: `internal/mcp/scope.go`, `internal/mcp/scope_test.go`, `internal/m
 
 Acceptance criteria:
 
-- [ ] `mcp.Deps` gains `Registry *conversation.Registry`, defaulted to `conversation.New()` when nil, matching the
+- [x] `mcp.Deps` gains `Registry *conversation.Registry`, defaulted to `conversation.New()` when nil, matching the
       existing defaulting style in `buildHandlers`.
-- [ ] `server.New` builds one registry for the process and passes it to `mcp.New`.
-- [ ] `scopeKey` reads `X-LC-User-Id` and `X-LC-Conversation-Id`, trims whitespace, resolves the names
+- [x] `server.New` builds one registry for the process and passes it to `mcp.New`.
+- [x] `scopeKey` reads `X-LC-User-Id` and `X-LC-Conversation-Id`, trims whitespace, resolves the names
       case-insensitively, and falls back to the session ID when `X-LC-Conversation-Id` is absent.
-- [ ] `scopeKey` does not panic on a nil request, a nil `Extra`, or a nil session, since the existing direct-call test
+- [x] `scopeKey` does not panic on a nil request, a nil `Extra`, or a nil session, since the existing direct-call test
       passes a nil request.
-- [ ] `inline` records the prepared image under `scopeKey(req)`, and only after `imgfmt.Inline` succeeds; a fetch
+- [x] `inline` records the prepared image under `scopeKey(req)`, and only after `imgfmt.Inline` succeeds; a fetch
       failure or an encode failure records nothing.
-- [ ] `inline`'s name, description, schema, structured output, and content are byte-identical to the base, and its
+- [x] `inline`'s name, description, schema, structured output, and content are byte-identical to the base, and its
       three existing tests pass unmodified.
-- [ ] A test asserts two `inline` calls in one conversation leave two entries in call order, and a failed call leaves
+- [x] A test asserts two `inline` calls in one conversation leave two entries in call order, and a failed call leaves
       none.
-- [ ] A test asserts the conversation ID and user ID appear in no log output, using the observer logger the base
+- [x] A test asserts the conversation ID and user ID appear in no log output, using the observer logger the base
       already uses for its API-key check.
-- [ ] A request without `X-LC-Conversation-Id` logs exactly one warning naming that header, and the warning contains
+- [x] A request without `X-LC-Conversation-Id` logs exactly one warning naming that header, and the warning contains
       no header value.
 
 ### Unit 3: the `files` and `latest` tools
@@ -334,22 +334,23 @@ Deliverables: `internal/mcp/files.go`, `internal/mcp/files_test.go`, `internal/p
 
 Acceptance criteria:
 
-- [ ] `tools/list` is exactly `["files", "inline", "latest"]`, and registers none of them when no resolver is
+- [x] `tools/list` is exactly `["files", "inline", "latest"]`, and registers none of them when no resolver is
       configured. This intentionally replaces the bootstrap's one-tool guarantee.
-- [ ] Both tools advertise a no-argument object input schema and are callable with empty arguments.
-- [ ] After two inlines, `files` content is `[text(url1), image, text(url2), image]`, its output `count` is 2, and its
+- [x] Both tools advertise a no-argument object input schema and are callable with empty arguments.
+- [x] After two inlines, `files` content is `[text(url1), image, text(url2), image]`, its output `count` is 2, and its
       `files` array lists both URLs oldest first.
-- [ ] `latest` returns the second image with both audiences set, and its output matches that file's
+- [x] `latest` returns the second image with both audiences set, and its output matches that file's
       `{url, media_type, bytes}`.
-- [ ] The image bytes returned by `files` are byte-identical to the bytes `inline` returned for the same URL, proving
+- [x] The image bytes returned by `files` are byte-identical to the bytes `inline` returned for the same URL, proving
       nothing is re-encoded.
-- [ ] With no files, both tools return `count` 0, a single text note, and `IsError` false.
-- [ ] Over HTTP, two clients with the same conversation header but different sessions share one file list, which is
+- [x] With no files, `files` returns `count` 0 with no entries and `latest` returns a zero output, both alongside a
+      single text note and `IsError` false.
+- [x] Over HTTP, two clients with the same conversation header but different sessions share one file list, which is
       the behaviour that distinguishes conversation scope from session scope.
-- [ ] Over HTTP, one client session using two different conversation headers sees two isolated file lists, and a
+- [x] Over HTTP, one client session using two different conversation headers sees two isolated file lists, and a
       request with no conversation header is scoped to its session and does not see the conversation's files.
-- [ ] `present` still imports only `imgfmt` and the SDK, verified with `go list -deps`.
-- [ ] `go build ./...`, `go vet ./...`, and `go test ./... -race -count=1` pass.
+- [x] `present` still imports only `imgfmt` and the SDK, verified with `go list -deps`.
+- [x] `go build ./...`, `go vet ./...`, and `go test ./... -race -count=1` pass.
 
 ### Unit 4: documentation and real-client verification
 
@@ -357,8 +358,8 @@ Deliverables: `AGENTS.md`, `README.md`.
 
 Acceptance criteria:
 
-- [ ] `AGENTS.md`'s diagram includes `internal/conversation` and both edges, checked against `go list` output.
-- [ ] `README.md` lists the three tools, names `X-LC-User-Id` and `X-LC-Conversation-Id`, and states that a file's
+- [x] `AGENTS.md`'s diagram includes `internal/conversation` and both edges, checked against `go list` output.
+- [x] `README.md` lists the three tools, names `X-LC-User-Id` and `X-LC-Conversation-Id`, and states that a file's
       scope is the conversation the client names, falling back to the MCP session.
 - [ ] Human check: from a real MCP client, inline two images, then call `files` and confirm the model can see both,
       oldest first, and that `latest` returns the second.
@@ -370,7 +371,8 @@ Acceptance criteria:
 ## Verification
 
 Per unit, `go build ./...`, `go vet ./...`, and `go test ./... -race -count=1`. Unit 2's requirement that `inline` is
-untouched is checked by diffing it against `neo-mcp`, as the bootstrap did. Unit 3's header tests are the ones that
+untouched is checked by diffing it against `neo-mcp` at `fdc5359`, which is also the only way to check it now that
+upstream has deleted the tool. Unit 3's header tests are the ones that
 prove the SDK's header plumbing reaches a tool handler at all, which everything else here depends on. The criteria
 that carry the design are the `latest` invariant, conversation isolation, and the stability of scope across
 reconnects.
