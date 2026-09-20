@@ -1,4 +1,6 @@
-# <img src="docs/images/logo.webp" alt="Elfu MCP Logo" width="32"> LFU MCP
+<img src="docs/images/logo.webp" alt="Elfu MCP Logo" width="128">
+
+# LFU MCP
 
 > Librechat File Utilities, LFU, or Elfu.
 
