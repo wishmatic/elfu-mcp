@@ -1,4 +1,4 @@
-# ![](./docs/images/logo.webp =32x32) LFU MCP
+# ![](./docs/images/logo.webp) LFU MCP
 
 > Librechat File Utilities, LFU, or Elfu.
 
