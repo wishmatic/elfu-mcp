@@ -61,10 +61,19 @@ image at `InlineMaxBytes`. The alternatives are worse:
 
 ### Scope: the conversation named in the request headers
 
-The client sends the user ID and the conversation ID as request headers. The SDK attaches the HTTP request headers to
-each request (`RequestExtra.Header`, populated for every JSON-RPC request by the streamable HTTP transport), so a
-tool handler reads them from `req.Extra.Header` with no new plumbing. Header lookup is case-insensitive, so the
-client's casing does not matter.
+The client sends the user ID and the conversation ID as request headers:
+
+| Header                 | Meaning                                  |
+| ---------------------- | ---------------------------------------- |
+| `X-LC-User-Id`         | The user the conversation belongs to.    |
+| `X-LC-Conversation-Id` | The conversation the request is part of. |
+
+The `X-LC-` prefix is the client's, so these are simply the names it injects; they are constants in
+`internal/mcp/scope.go` and are what LibreChat sends.
+
+The SDK attaches the HTTP request headers to each request (`RequestExtra.Header`, populated for every JSON-RPC
+request by the streamable HTTP transport), so a tool handler reads them from `req.Extra.Header` with no new
+plumbing. Header lookup is case-insensitive, so the client's casing does not matter.
 
 The registry is keyed by the pair:
 
@@ -91,7 +100,14 @@ the conversation ID cannot reach the logs, in the same way the bootstrap asserts
 
 Accepted caveat: this is obscurity, not authorization. Anyone who knows a conversation ID and the matching user ID and
 holds the shared API key can read that conversation's files. That is acceptable here, and the API key remains the
-actual access control.
+actual access control. This matches how the sibling `code-interpreter` service treats the same pair: it derives its
+runtime session as a hash of tenant, user, and conversation hint, and documents that hint as never being a security
+boundary.
+
+Because those raw ids are secrets, the registry does not retain them. It stores entries under a digest of the key, so
+the ids live no longer than the request that carried them and a process-lifetime map, heap dump, or log line cannot
+be read back into a conversation ID. The digest is computed over the user ID and conversation ID with a separator,
+so no pair of ids can collide by concatenation.
 
 When the conversation header is absent, the call is scoped to the MCP session ID instead, which is what the previous
 draft of this plan did unconditionally. That keeps clients that send no headers working rather than failing, and it
@@ -99,10 +115,6 @@ degrades to exactly today's behaviour rather than to something new. A missing he
 warn level, naming the header that is missing but never a value, so a client that forgets it is visible in logs
 rather than silently scoped to the wrong thing. If the conversation header is present but the user header is absent,
 the key simply has an empty user ID.
-
-Assumption to confirm before implementing: the header names are constants in `internal/mcp/scope.go`, currently
-`X-User-Id` and `X-Conversation-Id`. They must be changed to whatever the client actually sends, because a mismatch
-does not fail, it silently falls back to session scoping.
 
 ### Order, identity, and the `latest` invariant
 
@@ -137,7 +149,8 @@ unpressured budget is exactly what the budget says is affordable.
 ### Interfaces
 
 `internal/conversation` is a new leaf package: standard library only, no SDK, no MCP types. It is the whole state
-machine, so it is testable without a server.
+machine, so it is testable without a server. Its map is keyed by a digest of the user and conversation IDs, so no raw
+id is retained.
 
 ```go
 package conversation
@@ -153,7 +166,7 @@ type Entry struct {
 	Data      []byte
 }
 
-type Registry struct { /* unexported map keyed by Key, guarded by one mutex */ }
+type Registry struct { /* unexported map keyed by a key digest, guarded by one mutex */ }
 
 func New() *Registry
 
@@ -280,6 +293,9 @@ Acceptance criteria:
 - [ ] Recording 51 entries keeps 50 and drops the oldest.
 - [ ] Entries recorded under one key never appear under another, for keys that differ in either the user ID or the
       conversation ID.
+- [ ] The registry retains no raw id: no stored key contains the conversation ID or the user ID as a substring.
+- [ ] Keys cannot collide by concatenation, so `{UserID: "ab", ConversationID: "c"}` and
+      `{UserID: "a", ConversationID: "bc"}` are separate conversations.
 - [ ] A `Record` that would exceed the total byte budget evicts the least recently used conversation, and the evicted
       conversation's `Files` is then empty. The conversation being written survives.
 - [ ] `Files` and `Latest` on an unknown key return an empty slice and `false`.
@@ -296,8 +312,8 @@ Acceptance criteria:
 - [ ] `mcp.Deps` gains `Registry *conversation.Registry`, defaulted to `conversation.New()` when nil, matching the
       existing defaulting style in `buildHandlers`.
 - [ ] `server.New` builds one registry for the process and passes it to `mcp.New`.
-- [ ] `scopeKey` returns the user and conversation IDs from the request headers, trims whitespace, reads header names
-      case-insensitively, and falls back to the session ID when the conversation header is absent.
+- [ ] `scopeKey` reads `X-LC-User-Id` and `X-LC-Conversation-Id`, trims whitespace, resolves the names
+      case-insensitively, and falls back to the session ID when `X-LC-Conversation-Id` is absent.
 - [ ] `scopeKey` does not panic on a nil request, a nil `Extra`, or a nil session, since the existing direct-call test
       passes a nil request.
 - [ ] `inline` records the prepared image under `scopeKey(req)`, and only after `imgfmt.Inline` succeeds; a fetch
@@ -308,7 +324,7 @@ Acceptance criteria:
       none.
 - [ ] A test asserts the conversation ID and user ID appear in no log output, using the observer logger the base
       already uses for its API-key check.
-- [ ] A request without the conversation header logs exactly one warning naming the header, and the warning contains
+- [ ] A request without `X-LC-Conversation-Id` logs exactly one warning naming that header, and the warning contains
       no header value.
 
 ### Unit 3: the `files` and `latest` tools
@@ -342,8 +358,8 @@ Deliverables: `AGENTS.md`, `README.md`.
 Acceptance criteria:
 
 - [ ] `AGENTS.md`'s diagram includes `internal/conversation` and both edges, checked against `go list` output.
-- [ ] `README.md` lists the three tools, names the two request headers, and states that a file's scope is the
-      conversation the client names, falling back to the MCP session.
+- [ ] `README.md` lists the three tools, names `X-LC-User-Id` and `X-LC-Conversation-Id`, and states that a file's
+      scope is the conversation the client names, falling back to the MCP session.
 - [ ] Human check: from a real MCP client, inline two images, then call `files` and confirm the model can see both,
       oldest first, and that `latest` returns the second.
 - [ ] Human check: reconnect or restart the client mid-conversation and confirm `files` still returns the
