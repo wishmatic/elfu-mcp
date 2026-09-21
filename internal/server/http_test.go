@@ -127,7 +127,7 @@ func TestMCPListsTools(t *testing.T) {
 		names = append(names, tool.Name)
 	}
 
-	if want := []string{"inline", "since", "time"}; !slices.Equal(names, want) {
+	if want := []string{"inline", "since", "sleep", "time"}; !slices.Equal(names, want) {
 		t.Errorf("tools = %v, want %v", names, want)
 	}
 }

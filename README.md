@@ -24,9 +24,10 @@ This MCP defines a mapping environment variable that does this.
 This also works with local images on disk if mapped, though you should be careful here; the MCP can enumerate and see
 all files uploaded by any user to Librechat, for example, so make sure URL paths are unguessable.
 
-### `time` and `since`
+### `time`, `since`, and `sleep`
 
-`time` returns the datetime. `since` takes a datetime and returns how long ago it was in human-readable form.
+`time` returns the datetime. `since` takes a datetime and returns how long ago it was in human-readable form. `sleep`
+waits up to 30 seconds and returns the time it woke.
 
 ## Usage
 

@@ -36,6 +36,7 @@ func buildHandlers(deps Deps) *handlers {
 func registerTools(srv *mcp.Server, h *handlers) {
 	registerTime(srv, h)
 	registerSince(srv, h)
+	registerSleep(srv, h)
 
 	if h.resolver != nil {
 		registerInline(srv, h)
