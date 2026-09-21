@@ -2,7 +2,7 @@
 
 # LFU MCP
 
-> Librechat Function Utilities, LFU, or Elfu.
+> Librechat Functional Utilities, LFU, or Elfu.
 
 An MCP server of small utilities for Librechat. It looks at images and reports the clock: `inline` returns an image as
 an MCP image block so a vision-capable model can see it, while `time` and `since` answer what an agent would otherwise

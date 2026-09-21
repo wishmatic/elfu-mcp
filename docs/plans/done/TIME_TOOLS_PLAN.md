@@ -9,7 +9,7 @@ Give an agent the two facts it otherwise guesses: what time it is now, and how l
 from this service rather than from the model's sense of the clock, so they are as authoritative as the container's
 timezone.
 
-Second, name the product correctly. The initialism LFU still stands, but it expands to Librechat Function Utilities;
+Second, name the product correctly. The initialism LFU still stands, but it expands to Librechat Functional Utilities;
 this MCP is not only about files, and it is about to grow tools that have nothing to do with them.
 
 ## Non-goals
@@ -90,7 +90,7 @@ Deliverables: `README.md`.
 
 Acceptance criteria:
 
-- [x] Every expansion of LFU in a live document reads "Librechat Function Utilities". `docs/plans/done` is untouched.
+- [x] Every expansion of LFU in a live document reads "Librechat Functional Utilities". `docs/plans/done` is untouched.
 
 ### Unit 2: the timing package
 
