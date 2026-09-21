@@ -23,15 +23,15 @@ Some of the URLs a model is given are not reachable from this service:
 - a LibreChat image URL needs a session cookie, so `inline` cannot download it;
 - an image URL that is another MCP's public host, which resolves differently inside the network.
 
-`INLINE_URL_MAP` maps either kind to somewhere this service can read it, as comma-separated `public=private` pairs where
+`IMAGE_URL_MAP` maps either kind to somewhere this service can read it, as comma-separated `public=private` pairs where
 the private side is an absolute `http(s)` base URL or a directory:
 
 ```sh
 # LibreChat's uploaded images, with its images directory mounted into this container
-INLINE_URL_MAP=https://chat.example.com/images/=/data/librechat-data
+IMAGE_URL_MAP=https://chat.example.com/images/=/data/librechat-data
 
 # Images served by another MCP, reached under a private name
-INLINE_URL_MAP=https://neo.example.com=http://neo-mcp:8080
+IMAGE_URL_MAP=https://neo.example.com=http://neo-mcp:8080
 ```
 
 A URL under a public key is rewritten to the private side before it is fetched, so the model can pass either kind to
@@ -50,7 +50,7 @@ docker run -d \
   -p 8080:8080 \
   -e API_KEY=change-me \
   -e PUBLIC_HOST=http://192.168.1.10:8080 \
-  -e INLINE_URL_MAP=https://chat.example.com/images/=/data/librechat-data \
+  -e IMAGE_URL_MAP=https://chat.example.com/images/=/data/librechat-data \
   -v /mnt/user/appdata/elfu-mcp:/data \
   -v /mnt/user/appdata/librechat/client/public/images:/data/librechat-data:ro \
   ghcr.io/wishmatic/elfu-mcp:latest

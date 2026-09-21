@@ -17,7 +17,7 @@ type Config struct {
 
 	APIKey string `env:"API_KEY"`
 
-	InlineURLMap string `env:"INLINE_URL_MAP"`
+	ImageURLMap string `env:"IMAGE_URL_MAP"`
 
 	PublicHost string `env:"PUBLIC_HOST"`
 	FilesDir   string `env:"FILES_DIR" envDefault:"files"`

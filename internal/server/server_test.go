@@ -104,17 +104,17 @@ func TestNewRequiresFilesDir(t *testing.T) {
 	}
 }
 
-func TestNewRejectsInvalidInlineURLMap(t *testing.T) {
+func TestNewRejectsInvalidImageURLMap(t *testing.T) {
 	cfg := testConfig(t)
-	cfg.InlineURLMap = "https://chat.example.com=not-a-directory-or-url"
+	cfg.ImageURLMap = "https://chat.example.com=not-a-directory-or-url"
 
 	_, err := New(cfg, zap.NewNop())
 	if err == nil {
 		t.Fatal("New() error = nil, want an error")
 	}
 
-	if !strings.Contains(err.Error(), "INLINE_URL_MAP") {
-		t.Errorf("error = %q, want it to name INLINE_URL_MAP", err.Error())
+	if !strings.Contains(err.Error(), "IMAGE_URL_MAP") {
+		t.Errorf("error = %q, want it to name IMAGE_URL_MAP", err.Error())
 	}
 }
 

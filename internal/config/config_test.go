@@ -27,7 +27,7 @@ func unsetEnv(t *testing.T, key string) {
 }
 
 func TestLoadDefaults(t *testing.T) {
-	for _, key := range []string{"HOST", "PORT", "LOG_LEVEL", "PUBLIC_HOST", "FILES_DIR", "INLINE_URL_MAP"} {
+	for _, key := range []string{"HOST", "PORT", "LOG_LEVEL", "PUBLIC_HOST", "FILES_DIR", "IMAGE_URL_MAP"} {
 		unsetEnv(t, key)
 	}
 
@@ -56,8 +56,8 @@ func TestLoadDefaults(t *testing.T) {
 		t.Errorf("FilesDir = %q, want files by default", cfg.FilesDir)
 	}
 
-	if cfg.InlineURLMap != "" {
-		t.Errorf("InlineURLMap = %q, want empty by default", cfg.InlineURLMap)
+	if cfg.ImageURLMap != "" {
+		t.Errorf("ImageURLMap = %q, want empty by default", cfg.ImageURLMap)
 	}
 
 	if got := cfg.Addr(); got != "0.0.0.0:8080" {
@@ -83,18 +83,18 @@ func TestLoadFiles(t *testing.T) {
 	}
 }
 
-func TestLoadInlineURLMap(t *testing.T) {
+func TestLoadImageURLMap(t *testing.T) {
 	const spec = "https://chat.example.com/images/=/data/librechat-data"
 
-	t.Setenv("INLINE_URL_MAP", spec)
+	t.Setenv("IMAGE_URL_MAP", spec)
 
 	cfg, err := Load()
 	if err != nil {
 		t.Fatalf("Load() error: %v", err)
 	}
 
-	if cfg.InlineURLMap != spec {
-		t.Errorf("InlineURLMap = %q, want %q", cfg.InlineURLMap, spec)
+	if cfg.ImageURLMap != spec {
+		t.Errorf("ImageURLMap = %q, want %q", cfg.ImageURLMap, spec)
 	}
 }
 

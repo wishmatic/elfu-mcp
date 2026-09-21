@@ -75,9 +75,9 @@ func New(cfg config.Config, log *zap.Logger) (*Server, error) {
 	log.Info("local files enabled", zap.String("dir", cfg.FilesDir))
 	log.Warn("stored files are readable by anyone with the URL")
 
-	sources, err := sourcemap.Parse(cfg.InlineURLMap)
+	sources, err := sourcemap.Parse(cfg.ImageURLMap)
 	if err != nil {
-		return nil, fmt.Errorf("INLINE_URL_MAP: %w", err)
+		return nil, fmt.Errorf("IMAGE_URL_MAP: %w", err)
 	}
 
 	resolver, err := resolve.New(files, publicBase.String(), sources)

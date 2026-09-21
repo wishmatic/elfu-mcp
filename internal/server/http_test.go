@@ -196,7 +196,7 @@ func TestMCPInlineReadsMappedDirectory(t *testing.T) {
 	}
 
 	cfg := testConfig(t)
-	cfg.InlineURLMap = "https://chat.example.com/images/=" + dir
+	cfg.ImageURLMap = "https://chat.example.com/images/=" + dir
 
 	srv, err := New(cfg, zap.NewNop())
 	if err != nil {
