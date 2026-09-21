@@ -2,19 +2,33 @@
 
 # LFU MCP
 
-> Librechat File Utilities, LFU, or Elfu.
+> Librechat Function Utilities, LFU, or Elfu.
 
-An MCP server for looking at images. It has one tool, `inline`: give it an image URL and it returns the image itself as
-an MCP image block, downscaled and re-encoded to WebP, so a vision-capable model can see it.
+An MCP server of small utilities for Librechat. It looks at images and reports the clock: `inline` returns an image as
+an MCP image block so a vision-capable model can see it, while `time` and `since` answer what an agent would otherwise
+guess at.
 
 Built from [Neo MCP](https://github.com/wishmatic/neo-mcp), from which the whole `inline` tool is taken.
 
-## The tool
+## Tools
 
-`inline` takes an `image_url`, follows redirects, and returns the image. Pass any URL the user gives you.
+### `inline`
+
+`inline` takes an `image_url`, follows redirects, and returns the image, downscaled and re-encoded to WebP. Pass any
+URL the user gives you.
 
 An image the user pastes into a chat has no URL you can read, so ask them for one; see
 [docs/PROMPT.md](docs/PROMPT.md) for the agent instructions that say so.
+
+### `time`
+
+`time` takes no arguments and returns the current date and time in the container's timezone: an ISO 8601 timestamp with
+its offset, Unix seconds, and a readable form.
+
+### `since`
+
+`since` takes an ISO 8601 timestamp and returns how long ago it was, in words: `3 hours ago`. A timestamp in the future
+reads `in 3 hours`.
 
 ## Reading URLs the model cannot fetch
 
@@ -51,12 +65,16 @@ docker run -d \
   -e API_KEY=change-me \
   -e PUBLIC_HOST=http://192.168.1.10:8080 \
   -e IMAGE_URL_MAP=https://chat.example.com/images/=/data/librechat-data \
+  -e TZ=Australia/Sydney \
   -v /mnt/user/appdata/elfu-mcp:/data \
   -v /mnt/user/appdata/librechat/client/public/images:/data/librechat-data:ro \
   ghcr.io/wishmatic/elfu-mcp:latest
 ```
 
 The MCP endpoint is served at `/mcp`; stored images are served from `/i/`.
+
+`TZ` is the timezone `time` and `since` answer in, and an unset one means UTC. The zoneinfo database is embedded, so
+any IANA name works without it being installed in the image.
 
 `/data` holds the file store, so bind-mount a host directory there to keep files across container replacements; the
 container runs as uid 65532, so that directory must be writable by it.

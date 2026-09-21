@@ -49,10 +49,11 @@ func TestToolRegistration(t *testing.T) {
 		{
 			name:       "resolver configured",
 			configured: true,
-			want:       []string{"inline"},
+			want:       []string{"inline", "since", "time"},
 		},
 		{
 			name: "no resolver",
+			want: []string{"since", "time"},
 		},
 	}
 

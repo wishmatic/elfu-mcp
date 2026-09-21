@@ -50,8 +50,8 @@ lines of code, and even if it might influence readability, do so at unacceptably
 
 Arrows point from a package to the packages it imports. Only `internal/server` may import `internal/mcp`; the
 libraries below it must not import `internal/mcp` or the MCP SDK, except `internal/present`, which is the presentation
-layer for MCP content: it may import the SDK, but never `internal/mcp`. `internal/utils` and `internal/sourcemap` are
-the shared leaves and must stay dependency-free.
+layer for MCP content: it may import the SDK, but never `internal/mcp`. `internal/utils`, `internal/sourcemap`, and
+`internal/timing` are the shared leaves and must stay dependency-free.
 
 If you make changes to the architecture, update this diagram.
 
@@ -67,6 +67,7 @@ flowchart TD
     imgfmt["internal/imgfmt"]
     config["internal/config"]
     auth["internal/auth"]
+    timing["internal/timing"]
     utils["internal/utils"]
 
     cmd --> server
@@ -82,6 +83,7 @@ flowchart TD
     mcp --> imgfmt
     mcp --> present
     mcp --> resolve
+    mcp --> timing
 
     filestore --> imgfmt
     present --> imgfmt

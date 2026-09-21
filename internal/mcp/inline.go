@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/google/jsonschema-go/jsonschema"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/wishmatic/elfu-mcp/internal/imgfmt"
 	"github.com/wishmatic/elfu-mcp/internal/present"
@@ -26,7 +25,7 @@ func registerInline(srv *mcp.Server, h *handlers) {
 		Name: "inline",
 		Description: "Fetch an image from a URL and return it inline as an MCP image block, downscaled and re-encoded so a " +
 			"vision-capable model can see it. Use it to look at an image the user links to or one another tool points at.",
-		InputSchema: inlineSchema(),
+		InputSchema: inputSchema[inlineInput]("inline"),
 	}, h.inline)
 }
 
@@ -63,13 +62,4 @@ func (h *handlers) inline(
 	)
 
 	return &mcp.CallToolResult{Content: present.InlineImage(in.ImageURL, image)}, out, nil
-}
-
-func inlineSchema() *jsonschema.Schema {
-	s, err := jsonschema.For[inlineInput](nil)
-	if err != nil {
-		panic(fmt.Sprintf("inline: infer input schema: %v", err))
-	}
-
-	return s
 }

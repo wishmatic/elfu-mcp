@@ -1,6 +1,8 @@
 package mcp
 
 import (
+	"time"
+
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/wishmatic/elfu-mcp/internal/resolve"
 	"go.uber.org/zap"
@@ -26,10 +28,15 @@ func buildHandlers(deps Deps) *handlers {
 	return &handlers{
 		log:      deps.Log,
 		resolver: deps.Resolver,
+		location: time.Local,
+		now:      time.Now,
 	}
 }
 
 func registerTools(srv *mcp.Server, h *handlers) {
+	registerTime(srv, h)
+	registerSince(srv, h)
+
 	if h.resolver != nil {
 		registerInline(srv, h)
 	}

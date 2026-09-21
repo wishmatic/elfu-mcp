@@ -8,6 +8,9 @@ import (
 	"syscall"
 	"time"
 
+	// The distroless runtime image ships no zoneinfo, so the database is embedded to let a named TZ resolve.
+	_ "time/tzdata"
+
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 

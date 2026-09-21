@@ -113,7 +113,7 @@ func callInline(t *testing.T, session *mcp.ClientSession, imageURL string) *mcp.
 	return result
 }
 
-func TestMCPListsOnlyInline(t *testing.T) {
+func TestMCPListsTools(t *testing.T) {
 	api := newAPI(t, newTestServer(t, zap.NewNop()))
 	session := newMCPSession(t, api)
 
@@ -127,7 +127,7 @@ func TestMCPListsOnlyInline(t *testing.T) {
 		names = append(names, tool.Name)
 	}
 
-	if want := []string{"inline"}; !slices.Equal(names, want) {
+	if want := []string{"inline", "since", "time"}; !slices.Equal(names, want) {
 		t.Errorf("tools = %v, want %v", names, want)
 	}
 }

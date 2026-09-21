@@ -6,6 +6,7 @@ import (
 	"image/color"
 	"image/png"
 	"testing"
+	"time"
 
 	"github.com/wishmatic/elfu-mcp/internal/resolve"
 	"go.uber.org/zap"
@@ -13,8 +14,20 @@ import (
 
 const testImageSize = 4
 
+var testLocation = time.FixedZone("AEST", 10*60*60)
+
 func zapNop() *zap.Logger {
 	return zap.NewNop()
+}
+
+// testHandlers is a handler set with the zone and the clock pinned, so the time tools are testable without waiting on
+// the real clock.
+func testHandlers(now time.Time) *handlers {
+	return &handlers{
+		log:      zapNop(),
+		location: testLocation,
+		now:      func() time.Time { return now },
+	}
 }
 
 func newResolver(t *testing.T) *resolve.Resolver {
