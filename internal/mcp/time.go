@@ -25,6 +25,7 @@ func registerTime(srv *mcp.Server, h *handlers) {
 		Description: "Report the current date and time, in the server's timezone and with its UTC offset. Call it " +
 			"whenever the current time matters, rather than assuming today's date or the time of day.",
 		InputSchema: inputSchema[timeInput]("time"),
+		Annotations: toolAnnotations(false),
 	}, h.currentTime)
 }
 

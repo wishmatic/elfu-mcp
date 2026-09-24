@@ -26,6 +26,7 @@ func registerSince(srv *mcp.Server, h *handlers) {
 		Description: "Report how long ago an ISO 8601 timestamp was, in words and in seconds. Use it to make sense " +
 			"of a timestamp in a message, a log, or a file, rather than estimating the elapsed time.",
 		InputSchema: inputSchema[sinceInput]("since"),
+		Annotations: toolAnnotations(false),
 	}, h.since)
 }
 

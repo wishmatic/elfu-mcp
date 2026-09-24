@@ -26,6 +26,7 @@ func registerInline(srv *mcp.Server, h *handlers) {
 		Description: "Fetch an image from a URL and return it inline as an MCP image block, downscaled and re-encoded so a " +
 			"vision-capable model can see it. Use it to look at an image the user links to or one another tool points at.",
 		InputSchema: inputSchema[inlineInput]("inline"),
+		Annotations: toolAnnotations(true),
 	}, h.inline)
 }
 

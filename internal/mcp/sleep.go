@@ -29,6 +29,7 @@ func registerSleep(srv *mcp.Server, h *handlers) {
 		Description: "Wait for a number of seconds, up to 30, and then report the time it woke. Use it when something " +
 			"else needs a moment to finish, such as a file that is still being written, rather than retrying at once.",
 		InputSchema: inputSchema[sleepInput]("sleep"),
+		Annotations: toolAnnotations(false),
 	}, h.sleep)
 }
 
