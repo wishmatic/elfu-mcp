@@ -39,16 +39,42 @@ func videoHTML(videoURL string) string {
 const videoURLPlaceholder = "{video_url}"
 
 // videoHTMLTemplate is filled by videoHTML rather than by fmt, whose percent verbs the CSS would trip over.
+//
+// The host sizes the iframe from the ui-size-change messages the document posts, and the iframe it starts at is far
+// too short for a video, so nothing in the page may derive its height from the iframe's.
 const videoHTMLTemplate = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <style>
 html, body { margin: 0; background: transparent; }
-video { display: block; width: 100%; }
+video { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: contain; background: #000; }
 </style>
 </head>
 <body>
 <video src="{video_url}" controls playsinline preload="metadata"></video>
+<script>
+(function () {
+  var video = document.querySelector('video');
+
+  function report() {
+    var height = Math.ceil(video.getBoundingClientRect().height);
+    if (height > 0) {
+      window.parent.postMessage({ type: 'ui-size-change', payload: { height: height } }, '*');
+    }
+  }
+
+  // The ratio in the style block is a placeholder held until the real one arrives, which keeps the first report from
+  // claiming the 150px the element measures while it has no metadata.
+
+  video.addEventListener('loadedmetadata', function () {
+    video.style.aspectRatio = 'auto';
+    report();
+  });
+
+  new ResizeObserver(report).observe(video);
+  report();
+})();
+</script>
 </body>
 </html>`

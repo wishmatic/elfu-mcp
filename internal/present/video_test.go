@@ -51,16 +51,30 @@ func TestEmbedVideoPlayer(t *testing.T) {
 	}
 }
 
+func TestEmbedVideoReportsItsOwnSize(t *testing.T) {
+	html := embeddedVideo(t, EmbedVideo(testVideoURL)).Text
+
+	// The host sizes the iframe from this message, so without it the player is stuck at the iframe's default height.
+	if !strings.Contains(html, "ui-size-change") {
+		t.Errorf("resource text = %q, want it to report its size to the host", html)
+	}
+
+	if !strings.Contains(html, "ResizeObserver") {
+		t.Errorf("resource text = %q, want it to report its size again when the video resizes", html)
+	}
+}
+
 func TestEmbedVideoEscapesURL(t *testing.T) {
 	hostile := `https://cdn.example.com/x.mp4?a=1&b="><script>alert(1)</script>`
 	html := embeddedVideo(t, EmbedVideo(hostile)).Text
 
-	if strings.Contains(html, "<script>") {
+	if strings.Contains(html, hostile) {
 		t.Fatalf("resource text = %q, want the URL escaped, not markup", html)
 	}
 
-	if !strings.Contains(html, "&lt;script&gt;") || !strings.Contains(html, "&amp;b=") {
-		t.Errorf("resource text = %q, want the URL escaped", html)
+	escaped := `https://cdn.example.com/x.mp4?a=1&amp;b=&#34;&gt;&lt;script&gt;alert(1)&lt;/script&gt;`
+	if !strings.Contains(html, `src="`+escaped+`"`) {
+		t.Errorf("resource text = %q, want the URL escaped inside the src attribute", html)
 	}
 }
 
