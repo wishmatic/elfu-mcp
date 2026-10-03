@@ -127,8 +127,42 @@ func TestMCPListsTools(t *testing.T) {
 		names = append(names, tool.Name)
 	}
 
-	if want := []string{"inline", "since", "sleep", "time"}; !slices.Equal(names, want) {
+	if want := []string{"embed", "inline", "since", "sleep", "time"}; !slices.Equal(names, want) {
 		t.Errorf("tools = %v, want %v", names, want)
+	}
+}
+
+func TestMCPEmbedOverHTTP(t *testing.T) {
+	api := newAPI(t, newTestServer(t, zap.NewNop()))
+	session := newMCPSession(t, api)
+
+	result, err := session.CallTool(context.Background(), &mcp.CallToolParams{
+		Name:      "embed",
+		Arguments: map[string]any{"video_url": "https://cdn.example.com/clip.mp4"},
+	})
+	if err != nil {
+		t.Fatalf("CallTool(embed) error: %v", err)
+	}
+
+	if result.IsError {
+		t.Fatalf("CallTool(embed) tool error: %+v", result.Content)
+	}
+
+	if len(result.Content) != 2 {
+		t.Fatalf("content = %d, want a caption and one resource", len(result.Content))
+	}
+
+	resource, ok := result.Content[1].(*mcp.EmbeddedResource)
+	if !ok {
+		t.Fatalf("content[1] = %#v, want an embedded resource", result.Content[1])
+	}
+
+	if !strings.HasPrefix(resource.Resource.URI, "ui://") {
+		t.Errorf("uri = %q, want a ui:// URI", resource.Resource.URI)
+	}
+
+	if resource.Resource.MIMEType != "text/html" {
+		t.Errorf("mime type = %q, want text/html", resource.Resource.MIMEType)
 	}
 }
 

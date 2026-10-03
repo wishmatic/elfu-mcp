@@ -24,6 +24,15 @@ This MCP defines a mapping environment variable that does this.
 This also works with local images on disk if mapped, though you should be careful here; the MCP can enumerate and see
 all files uploaded by any user to Librechat, for example, so make sure URL paths are unguessable.
 
+### `embed`
+
+`embed` takes a `video_url` and returns an HTML player that Librechat renders inline in the message, so the user can
+watch the video in the chat.
+
+It downloads nothing; the user's browser loads the URL itself. That URL therefore has to be one the browser can load
+on its own, without the chat's credentials. A video only reachable from inside the network, such as one behind
+Librechat's authenticated `/images/*` route, will not play.
+
 ### `time`, `since`, and `sleep`
 
 `time` returns the datetime. `since` takes a datetime and returns how long ago it was in human-readable form. `sleep`

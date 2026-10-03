@@ -16,7 +16,7 @@ func TestToolAnnotations(t *testing.T) {
 		t.Fatalf("ListTools() error: %v", err)
 	}
 
-	wantOpenWorld := map[string]bool{"inline": true, "since": false, "sleep": false, "time": false}
+	wantOpenWorld := map[string]bool{"embed": true, "inline": true, "since": false, "sleep": false, "time": false}
 
 	if len(result.Tools) != len(wantOpenWorld) {
 		t.Fatalf("tools = %d, want %d", len(result.Tools), len(wantOpenWorld))

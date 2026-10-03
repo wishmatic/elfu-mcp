@@ -37,6 +37,7 @@ func registerTools(srv *mcp.Server, h *handlers) {
 	registerTime(srv, h)
 	registerSince(srv, h)
 	registerSleep(srv, h)
+	registerEmbed(srv, h)
 
 	if h.resolver != nil {
 		registerInline(srv, h)
